@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Conteúdo Gerado</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Baskerville,serif;font-size:20px;line-height:1.6;margin:10px;background:url('https://st5.depositphotos.com/1032577/66413/i/450/depositphotos_664139922-stock-photo-bright-paper-white-paper-texture.jpg') repeat;}
+.video-container{position:relative;padding-bottom:56.25%;height:0;}
+.video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:6px;}
+</style>
+</head>
+<body>
+<div class="video-container"><iframe src="https://www.youtube.com/embed/9IEU5cqgn7k" allowfullscreen=""></iframe></div>
+<script>
+document.querySelectorAll('iframe').forEach(iframe=>{
+ let src=iframe.src;
+ if(src.includes('watch?v=')) iframe.src=src.replace('watch?v=','embed/');
+ if(src.includes('youtu.be/')) iframe.src=src.replace('youtu.be/','www.youtube.com/embed/');
+});
+</script>
+</body>
+</html>
