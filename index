@@ -9,11 +9,10 @@
     font-family: "Poppins", sans-serif;
     background: #f4f6fa;
     margin: 0;
-    padding: 0;
   }
 
   header {
-    background: linear-gradient(90deg, #1e88e5, #42a5f5);
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
     color: white;
     text-align: center;
     padding: 1.5rem;
@@ -27,9 +26,9 @@
   }
 
   .ano h2 {
-    border-left: 6px solid #1e88e5;
+    border-left: 6px solid #0284c7;
     padding-left: 10px;
-    color: #1e88e5;
+    color: #0284c7;
   }
 
   .materia {
@@ -44,9 +43,8 @@
   .carrossel {
     display: flex;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
     gap: 12px;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
   }
 
   .livro {
@@ -55,10 +53,8 @@
     background: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    scroll-snap-align: start;
-    cursor: pointer;
-    position: relative;
     text-align: center;
+    position: relative;
     transition: transform 0.2s;
   }
 
@@ -78,10 +74,11 @@
     font-size: 0.9rem;
     padding: 6px;
     margin: 0;
+    color: #333;
   }
 
   footer {
-    background: #1e88e5;
+    background: #0284c7;
     color: white;
     text-align: center;
     padding: 10px;
@@ -98,81 +95,91 @@
 </head>
 <body>
 
-<header>📚 Lição+ Escola Digital</header>
-
-<div id="conteudo">
-  <p style="text-align:center; color:#555;">Carregando conteúdos...</p>
-</div>
-
-<footer>© 2025 Lição+ • Plataforma Educacional Integrada</footer>
+<header>📘 Lição+ Escola Digital</header>
+<div id="conteudo"><p style="text-align:center; padding:20px;">🔄 Carregando conteúdo...</p></div>
+<footer>© 2025 Lição+ • Plataforma Educacional</footer>
 
 <script>
-const usuario = "profkleidivaldo"; // seu usuário GitHub
-const repositorio = "conteudos";   // repositório com os conteúdos
-
-async function carregarConteudo() {
-  const conteudoDiv = document.getElementById("conteudo");
-  conteudoDiv.innerHTML = "<p style='text-align:center;'>⏳ Carregando estrutura...</p>";
-
-  try {
-    const anos = await listarPastas(`https://api.github.com/repos/${usuario}/${repositorio}/contents/`);
-    conteudoDiv.innerHTML = ""; // limpa o "carregando"
-
-    for (const ano of anos) {
-      const anoDiv = document.createElement("div");
-      anoDiv.className = "ano";
-      anoDiv.innerHTML = `<h2>${formatarNome(ano.name)}</h2>`;
-
-      const materias = await listarPastas(ano.url);
-      for (const materia of materias) {
-        const materiaDiv = document.createElement("div");
-        materiaDiv.className = "materia";
-        materiaDiv.innerHTML = `<h3>${formatarNome(materia.name)}</h3>`;
-
-        const carrossel = document.createElement("div");
-        carrossel.className = "carrossel";
-
-        const topicos = await listarPastas(materia.url);
-        for (const topico of topicos) {
-          const livro = document.createElement("div");
-          livro.className = "livro";
-
-          const link = `https://${usuario}.github.io/${repositorio}/${encodeURIComponent(ano.name)}/${encodeURIComponent(materia.name)}/${encodeURIComponent(topico.name)}/index.html`;
-
-          livro.innerHTML = `
-            <a href="${link}" target="_blank">
-              <img src="https://picsum.photos/200/300?random=${Math.floor(Math.random()*100)}" alt="${topico.name}">
-              <h4>${formatarNome(topico.name)}</h4>
-            </a>`;
-          carrossel.appendChild(livro);
-        }
-
-        materiaDiv.appendChild(carrossel);
-        anoDiv.appendChild(materiaDiv);
-      }
-
-      conteudoDiv.appendChild(anoDiv);
-    }
-
-  } catch (erro) {
-    conteudoDiv.innerHTML = `<p style='color:red;text-align:center;'>⚠️ Erro ao carregar conteúdo: ${erro.message}</p>`;
-    console.error(erro);
-  }
-}
+const usuario = "profkleidivaldo"; // seu nome de usuário GitHub
+const repositorio = "conteudos";   // nome do repositório
 
 async function listarPastas(url) {
-  const resposta = await fetch(url);
-  if (!resposta.ok) throw new Error(`Erro ao buscar: ${url}`);
-  const dados = await resposta.json();
-  return dados.filter(item => item.type === "dir");
+  try {
+    const resposta = await fetch(url);
+    if (!resposta.ok) throw new Error(`Erro ${resposta.status}`);
+    const dados = await resposta.json();
+    return dados.filter(item => item.type === "dir");
+  } catch (erro) {
+    console.error("Erro ao buscar pastas:", erro);
+    return [];
+  }
 }
 
 function formatarNome(nome) {
   return nome
-    .replace(/([0-9]+º?ano)/i, "$1")
+    .replace(/ano/g, "º Ano")
     .replace(/_/g, " ")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, l => l.toUpperCase());
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/linguaportuguesa/i, "Língua Portuguesa")
+    .replace(/matematica/i, "Matemática")
+    .replace(/historia/i, "História")
+    .replace(/geografia/i, "Geografia")
+    .replace(/ciencias/i, "Ciências")
+    .replace(/^\w/, c => c.toUpperCase());
+}
+
+async function carregarConteudo() {
+  const conteudoDiv = document.getElementById("conteudo");
+  conteudoDiv.innerHTML = "<p style='text-align:center;'>🔍 Buscando conteúdo...</p>";
+
+  const urlBase = `https://api.github.com/repos/${usuario}/${repositorio}/contents`;
+  const anos = await listarPastas(urlBase);
+
+  if (anos.length === 0) {
+    conteudoDiv.innerHTML = "<p style='text-align:center;'>⚠️ Nenhum conteúdo encontrado. Verifique as pastas no repositório.</p>";
+    return;
+  }
+
+  conteudoDiv.innerHTML = "";
+
+  for (const ano of anos) {
+    const anoDiv = document.createElement("div");
+    anoDiv.className = "ano";
+    anoDiv.innerHTML = `<h2>${formatarNome(ano.name)}</h2>`;
+
+    const materias = await listarPastas(ano.url);
+
+    for (const materia of materias) {
+      const materiaDiv = document.createElement("div");
+      materiaDiv.className = "materia";
+      materiaDiv.innerHTML = `<h3>${formatarNome(materia.name)}</h3>`;
+
+      const carrossel = document.createElement("div");
+      carrossel.className = "carrossel";
+
+      const topicos = await listarPastas(materia.url);
+
+      for (const topico of topicos) {
+        const livro = document.createElement("div");
+        livro.className = "livro";
+        livro.innerHTML = `
+          <a href="https://${usuario}.github.io/${repositorio}/${ano.name}/${materia.name}/${topico.name}/index.html" target="_blank">
+            <img src="https://picsum.photos/200/300?random=${Math.floor(Math.random()*100)}" alt="${topico.name}">
+            <h4>${formatarNome(topico.name)}</h4>
+          </a>`;
+        carrossel.appendChild(livro);
+      }
+
+      if (topicos.length === 0) {
+        carrossel.innerHTML = "<p style='color:#999; padding:10px;'>Nenhum conteúdo disponível.</p>";
+      }
+
+      materiaDiv.appendChild(carrossel);
+      anoDiv.appendChild(materiaDiv);
+    }
+
+    conteudoDiv.appendChild(anoDiv);
+  }
 }
 
 carregarConteudo();
