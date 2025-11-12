@@ -1,189 +1,224 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lição+ Escola Digital</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lição+ · Conteúdos (auto)</title>
 <style>
-  body {
-    font-family: "Poppins", sans-serif;
-    background: #f4f6fa;
-    margin: 0;
-  }
-
-  header {
-    background: linear-gradient(90deg, #0284c7, #38bdf8);
-    color: white;
-    text-align: center;
-    padding: 1.5rem;
-    font-size: 1.8rem;
-    font-weight: bold;
-  }
-
-  .ano {
-    margin: 32px 0;
-    padding: 0 16px;
-  }
-
-  .ano h2 {
-    border-left: 6px solid #0284c7;
-    padding-left: 10px;
-    color: #0284c7;
-  }
-
-  .materia {
-    margin-bottom: 24px;
-  }
-
-  .materia h3 {
-    color: #555;
-    margin-bottom: 8px;
-  }
-
-  .carrossel {
-    display: flex;
-    overflow-x: auto;
-    gap: 12px;
-    padding-bottom: 10px;
-  }
-
-  .livro {
-    flex: 0 0 160px;
-    height: 220px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    text-align: center;
-    position: relative;
-    transition: transform 0.2s;
-  }
-
-  .livro:hover {
-    transform: scale(1.05);
-  }
-
-  .livro img {
-    width: 100%;
-    height: 140px;
-    object-fit: cover;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-
-  .livro h4 {
-    font-size: 0.9rem;
-    padding: 6px;
-    margin: 0;
-    color: #333;
-  }
-
-  footer {
-    background: #0284c7;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    font-size: 0.8rem;
-  }
-
-  @media (max-width: 768px) {
-    .livro {
-      flex: 0 0 140px;
-      height: 200px;
-    }
+  :root{--blue:#0e7490;--light:#e6f6fb;--muted:#667085}
+  body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:0;background:linear-gradient(180deg,#f8fbfd,#eef9ff);color:#123}
+  header{background:linear-gradient(90deg,#0ea5a4,#06b6d4);color:white;padding:20px;text-align:center}
+  header h1{margin:0;font-size:20px}
+  main{padding:18px;max-width:1200px;margin:0 auto}
+  .ano{margin:26px 0}
+  .ano h2{margin:0 0 10px 0;padding-left:10px;border-left:6px solid var(--blue);color:var(--blue)}
+  .materia{margin:12px 0 22px}
+  .materia h3{margin:6px 0;color:#0b5660}
+  .carrossel{display:flex;gap:12px;overflow-x:auto;padding:12px 6px}
+  .carrossel::-webkit-scrollbar{height:10px}
+  .card{flex:0 0 200px;background:white;border-radius:10px;box-shadow:0 6px 18px rgba(10,20,30,0.06);overflow:hidden;cursor:pointer;min-height:220px;display:flex;flex-direction:column}
+  .thumb{height:120px;background:#fafafa;display:flex;align-items:center;justify-content:center}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .meta{padding:10px;flex:1;display:flex;flex-direction:column}
+  .meta .title{font-weight:700;margin-bottom:6px;color:#0e5870;font-size:0.95rem}
+  .meta .sub{flex:1;color:var(--muted);font-size:0.86rem}
+  .meta .link{margin-top:8px;text-decoration:none;padding:8px 10px;border-radius:8px;background:var(--blue);color:white;display:inline-block;font-weight:700}
+  .note{color:var(--muted);padding:14px;background:#fff;border-radius:10px;box-shadow:0 6px 18px rgba(10,20,30,0.04);margin-top:12px}
+  footer{padding:18px;text-align:center;color:var(--muted);font-size:14px}
+  @media (max-width:720px){
+    .card{flex:0 0 160px}
+    .thumb{height:100px}
   }
 </style>
 </head>
 <body>
+<header>
+  <h1>📚 Lição+ — Catálogo automático (conteúdos/)</h1>
+  <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:6px">Busca automática por pastas e arquivos HTML dentro do repositório GitHub</div>
+</header>
 
-<header>📘 Lição+ Escola Digital</header>
-<div id="conteudo"><p style="text-align:center; padding:20px;">🔄 Carregando conteúdo...</p></div>
-<footer>© 2025 Lição+ • Plataforma Educacional</footer>
+<main id="main">
+  <p id="status" style="text-align:center;padding:18px;color:var(--muted)">🔄 Carregando pastas...</p>
+  <div id="catalogo"></div>
+</main>
+
+<footer>© Lição+ — Plataforma baseada em GitHub Pages</footer>
 
 <script>
-const usuario = "profkleidivaldo"; // seu nome de usuário GitHub
-const repositorio = "conteudos";   // nome do repositório
+/* ========== CONFIGURAÇÃO ========== */
+const usuario = "profkleidivaldo"; // seu usuário GitHub
+const repositorio = "conteudos";   // nome do repositório onde ficarão as pastas
+const raizApi = `https://api.github.com/repos/${usuario}/${repositorio}/contents`; // sem barra final
 
-async function listarPastas(url) {
-  try {
-    const resposta = await fetch(url);
-    if (!resposta.ok) throw new Error(`Erro ${resposta.status}`);
-    const dados = await resposta.json();
-    return dados.filter(item => item.type === "dir");
-  } catch (erro) {
-    console.error("Erro ao buscar pastas:", erro);
+/* ========== UTILITÁRIOS ========== */
+function safeText(s){
+  if(!s) return '';
+  // remove extensões como .html para exibir título
+  return decodeURIComponent(s).replace(/\.html?$/i,'').replace(/[-_]/g,' ').replace(/\b([a-z])([A-Z])/g,'$1 $2');
+}
+function formatTitle(nome){
+  // títulos legíveis: '1ano' -> '1º Ano', 'linguaportuguesa' -> 'Língua Portuguesa'
+  let t = nome.replace(/_/g,' ').replace(/-/g,' ');
+  t = t.replace(/^(\d)ano$/i, (m, g1)=> `${g1}º Ano`);
+  t = t.replace(/linguaportuguesa/i, 'Língua Portuguesa');
+  t = t.replace(/matematica/i, 'Matemática');
+  t = t.replace(/historia/i, 'História');
+  t = t.replace(/geografia/i, 'Geografia');
+  t = t.replace(/ciencias/i, 'Ciências');
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+function ghPagesUrl(parts){
+  // parts: array de segmentos do caminho (já sem encoding)
+  // deve retornar a URL pública do GitHub Pages com encoding por segmento
+  const encoded = parts.map(p => encodeURIComponent(p));
+  return `https://${usuario}.github.io/${repositorio}/${encoded.join('/')}`;
+}
+
+/* ========== FUNÇÕES DE API ========== */
+async function listarDiretorio(apiUrl){
+  // espera uma URL do tipo https://api.github.com/repos/user/repo/contents/path
+  try{
+    const res = await fetch(apiUrl);
+    if(!res.ok){
+      console.warn('listarDiretorio: resposta não OK', apiUrl, res.status);
+      return [];
+    }
+    const dados = await res.json();
+    // filtra apenas diretórios e arquivos
+    return Array.isArray(dados) ? dados : [];
+  }catch(err){
+    console.error('Erro fetch listarDiretorio', err);
     return [];
   }
 }
 
-function formatarNome(nome) {
-  return nome
-    .replace(/ano/g, "º Ano")
-    .replace(/_/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/linguaportuguesa/i, "Língua Portuguesa")
-    .replace(/matematica/i, "Matemática")
-    .replace(/historia/i, "História")
-    .replace(/geografia/i, "Geografia")
-    .replace(/ciencias/i, "Ciências")
-    .replace(/^\w/, c => c.toUpperCase());
-}
+/* ========== LÓGICA PRINCIPAL ========== */
+async function montarCatalogo(){
+  const status = document.getElementById('status');
+  const catalogo = document.getElementById('catalogo');
+  catalogo.innerHTML = '';
+  status.textContent = '🔍 Buscando pastas na raiz do repositório...';
 
-async function carregarConteudo() {
-  const conteudoDiv = document.getElementById("conteudo");
-  conteudoDiv.innerHTML = "<p style='text-align:center;'>🔍 Buscando conteúdo...</p>";
+  // 1) listar pastas na raiz (espera pastas: 1ano, 2ano, ...)
+  const raiz = await listarDiretorio(raizApi);
+  const pastasAnos = raiz.filter(x => x.type === 'dir');
 
-  const urlBase = `https://api.github.com/repos/${usuario}/${repositorio}/contents`;
-  const anos = await listarPastas(urlBase);
-
-  if (anos.length === 0) {
-    conteudoDiv.innerHTML = "<p style='text-align:center;'>⚠️ Nenhum conteúdo encontrado. Verifique as pastas no repositório.</p>";
+  if(pastasAnos.length === 0){
+    status.innerHTML = '⚠️ Não foram encontradas pastas no repositório. Verifique se você tem pastas como <code>1ano</code>, <code>2ano</code>, etc.';
     return;
   }
+  status.textContent = '';
 
-  conteudoDiv.innerHTML = "";
+  // percorre cada ano
+  for(const ano of pastasAnos){
+    const anoDiv = document.createElement('div');
+    anoDiv.className = 'ano';
+    anoDiv.innerHTML = `<h2>${formatTitle(ano.name)}</h2>`;
+    catalogo.appendChild(anoDiv);
 
-  for (const ano of anos) {
-    const anoDiv = document.createElement("div");
-    anoDiv.className = "ano";
-    anoDiv.innerHTML = `<h2>${formatarNome(ano.name)}</h2>`;
+    // 2) listar matérias dentro do ano
+    const materias = (await listarDiretorio(ano.url)).filter(x=>x.type === 'dir');
 
-    const materias = await listarPastas(ano.url);
-
-    for (const materia of materias) {
-      const materiaDiv = document.createElement("div");
-      materiaDiv.className = "materia";
-      materiaDiv.innerHTML = `<h3>${formatarNome(materia.name)}</h3>`;
-
-      const carrossel = document.createElement("div");
-      carrossel.className = "carrossel";
-
-      const topicos = await listarPastas(materia.url);
-
-      for (const topico of topicos) {
-        const livro = document.createElement("div");
-        livro.className = "livro";
-        livro.innerHTML = `
-          <a href="https://${usuario}.github.io/${repositorio}/${ano.name}/${materia.name}/${topico.name}/index.html" target="_blank">
-            <img src="https://picsum.photos/200/300?random=${Math.floor(Math.random()*100)}" alt="${topico.name}">
-            <h4>${formatarNome(topico.name)}</h4>
-          </a>`;
-        carrossel.appendChild(livro);
-      }
-
-      if (topicos.length === 0) {
-        carrossel.innerHTML = "<p style='color:#999; padding:10px;'>Nenhum conteúdo disponível.</p>";
-      }
-
-      materiaDiv.appendChild(carrossel);
-      anoDiv.appendChild(materiaDiv);
+    if(materias.length === 0){
+      const note = document.createElement('div'); note.className='note';
+      note.textContent = 'Nenhuma matéria encontrada dentro dessa pasta de ano.';
+      anoDiv.appendChild(note);
+      continue;
     }
 
-    conteudoDiv.appendChild(anoDiv);
-  }
+    // para cada matéria
+    for(const materia of materias){
+      const matDiv = document.createElement('div');
+      matDiv.className = 'materia';
+      matDiv.innerHTML = `<h3>${formatTitle(materia.name)}</h3>`;
+      anoDiv.appendChild(matDiv);
+
+      const carrossel = document.createElement('div');
+      carrossel.className = 'carrossel';
+      matDiv.appendChild(carrossel);
+
+      // 3) listar tópicos (subpastas) dentro da matéria
+      const topicos = (await listarDiretorio(materia.url)).filter(x=>x.type === 'dir');
+
+      // se não há subpastas, talvez o professor colocou arquivos HTML direto na matéria -> listar arquivos HTML aqui
+      if(topicos.length === 0){
+        const arquivos = (await listarDiretorio(materia.url)).filter(x=>x.type === 'file' && /\.html?$/i.test(x.name));
+        if(arquivos.length === 0){
+          const p = document.createElement('div'); p.className='note'; p.textContent='Nenhum tópico nem arquivos HTML encontrados nesta matéria.';
+          matDiv.appendChild(p);
+        } else {
+          // criar cards para cada arquivo HTML encontrado diretamente na matéria
+          for(const arquivo of arquivos){
+            const title = safeText(arquivo.name);
+            const url = ghPagesUrl([ano.name, materia.name, arquivo.name]);
+            const card = criarCard(title, '', url);
+            carrossel.appendChild(card);
+          }
+        }
+        continue;
+      }
+
+      // 4) para cada tópico, listar arquivos .html dentro do tópico
+      for(const topico of topicos){
+        const arquivos = (await listarDiretorio(topico.url)).filter(x=>x.type === 'file' && /\.html?$/i.test(x.name));
+
+        if(arquivos.length === 0){
+          // se não há arquivos .html, mostrar card indicando vazio
+          const card = document.createElement('div'); card.className='card'; card.innerHTML = `<div class="thumb"><img src="https://via.placeholder.com/400x240?text=Sem+Aulas"></div>
+            <div class="meta"><div class="title">${formatTitle(topico.name)}</div><div class="sub">Nenhuma aula HTML encontrada neste tópico.</div></div>`;
+          carrossel.appendChild(card);
+          continue;
+        }
+
+        // Se existir index.html, colocá-lo primeiro
+        arquivos.sort((a,b)=>{
+          if(/index\.html?$/i.test(a.name)) return -1;
+          if(/index\.html?$/i.test(b.name)) return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        // para cada arquivo .html no tópico, criar um card (um "livro" por aula)
+        for(const arquivo of arquivos){
+          const title = safeText(arquivo.name);
+          const url = ghPagesUrl([ano.name, materia.name, topico.name, arquivo.name]);
+          const thumb = buscarThumbNoArquivo(arquivo); // placeholder function (podemos melhorar)
+          const card = criarCard(title, thumb, url, topico.name);
+          carrossel.appendChild(card);
+        }
+      } // fim topicos
+    } // fim materias
+  } // fim anos
+
+  // fim montagem
+  if(catalogo.children.length === 0) status.textContent = '⚠️ Nenhum conteúdo exibido.';
 }
 
-carregarConteudo();
-</script>
+/* cria um card DOM (elemento) */
+function criarCard(title, thumbUrl, link, topicName){
+  const a = document.createElement('a');
+  a.className = 'card';
+  a.href = link;
+  a.target = '_blank';
+  const imgUrl = thumbUrl || `https://picsum.photos/400/240?random=${Math.floor(Math.random()*100)}`;
+  a.innerHTML = `<div class="thumb"><img src="${imgUrl}" alt="${escapeHtml(title)}"></div>
+    <div class="meta"><div class="title">${escapeHtml(title)}</div><div class="sub">${escapeHtml(topicName?formatTitle(topicName):'Aula')}</div>
+    <a class="link" href="${link}" target="_blank" style="display:inline-block;margin-top:8px;background:${'var(--blue)'};color:#fff;border-radius:8px;padding:6px 8px;text-decoration:none">Abrir</a>
+    </div>`;
+  return a;
+}
 
+function escapeHtml(str){ return (str||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+/* buscarThumbNoArquivo: placeholder - atualmente não baixa o arquivo para extrair imagem,
+   mas poderíamos buscar um arquivo chamado 'cover.jpg' ou 'thumb.png' na mesma pasta.
+   Para já, retorna null para usar imagem aleatória/picsum.
+*/
+function buscarThumbNoArquivo(fileObj){
+  return null;
+}
+
+/* ========== inicialização ========== */
+montarCatalogo();
+</script>
 </body>
 </html>
