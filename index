@@ -46,6 +46,7 @@
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 12px;
+    padding-bottom: 8px;
   }
 
   .livro {
@@ -97,70 +98,81 @@
 </head>
 <body>
 
-<header>Lição+ Escola Digital</header>
+<header>📚 Lição+ Escola Digital</header>
 
-<div id="conteudo"></div>
+<div id="conteudo">
+  <p style="text-align:center; color:#555;">Carregando conteúdos...</p>
+</div>
 
 <footer>© 2025 Lição+ • Plataforma Educacional Integrada</footer>
 
 <script>
-// Configuração inicial
-const usuario = "profkleidivaldo"; // Seu usuário GitHub
-const repositorio = "conteudos";  // Nome do repositório com as aulas
+const usuario = "profkleidivaldo"; // seu usuário GitHub
+const repositorio = "conteudos";   // repositório com os conteúdos
 
-// Função principal: busca os anos (1ano, 2ano etc.)
 async function carregarConteudo() {
   const conteudoDiv = document.getElementById("conteudo");
-  const anos = await listarPastas(`https://api.github.com/repos/${usuario}/${repositorio}/contents/`);
+  conteudoDiv.innerHTML = "<p style='text-align:center;'>⏳ Carregando estrutura...</p>";
 
-  for (const ano of anos) {
-    const anoDiv = document.createElement("div");
-    anoDiv.className = "ano";
-    anoDiv.innerHTML = `<h2>${formatarNome(ano.name)}</h2>`;
+  try {
+    const anos = await listarPastas(`https://api.github.com/repos/${usuario}/${repositorio}/contents/`);
+    conteudoDiv.innerHTML = ""; // limpa o "carregando"
 
-    const materias = await listarPastas(ano.url);
-    for (const materia of materias) {
-      const materiaDiv = document.createElement("div");
-      materiaDiv.className = "materia";
-      materiaDiv.innerHTML = `<h3>${formatarNome(materia.name)}</h3>`;
+    for (const ano of anos) {
+      const anoDiv = document.createElement("div");
+      anoDiv.className = "ano";
+      anoDiv.innerHTML = `<h2>${formatarNome(ano.name)}</h2>`;
 
-      const carrossel = document.createElement("div");
-      carrossel.className = "carrossel";
+      const materias = await listarPastas(ano.url);
+      for (const materia of materias) {
+        const materiaDiv = document.createElement("div");
+        materiaDiv.className = "materia";
+        materiaDiv.innerHTML = `<h3>${formatarNome(materia.name)}</h3>`;
 
-      const topicos = await listarPastas(materia.url);
-      for (const topico of topicos) {
-        const livro = document.createElement("div");
-        livro.className = "livro";
-        livro.innerHTML = `
-          <a href="https://${usuario}.github.io/${repositorio}/${ano.name}/${materia.name}/${topico.name}/index.html" target="_blank">
-            <img src="https://picsum.photos/200/300?random=${Math.floor(Math.random()*100)}" alt="${topico.name}">
-            <h4>${formatarNome(topico.name)}</h4>
-          </a>`;
-        carrossel.appendChild(livro);
+        const carrossel = document.createElement("div");
+        carrossel.className = "carrossel";
+
+        const topicos = await listarPastas(materia.url);
+        for (const topico of topicos) {
+          const livro = document.createElement("div");
+          livro.className = "livro";
+
+          const link = `https://${usuario}.github.io/${repositorio}/${encodeURIComponent(ano.name)}/${encodeURIComponent(materia.name)}/${encodeURIComponent(topico.name)}/index.html`;
+
+          livro.innerHTML = `
+            <a href="${link}" target="_blank">
+              <img src="https://picsum.photos/200/300?random=${Math.floor(Math.random()*100)}" alt="${topico.name}">
+              <h4>${formatarNome(topico.name)}</h4>
+            </a>`;
+          carrossel.appendChild(livro);
+        }
+
+        materiaDiv.appendChild(carrossel);
+        anoDiv.appendChild(materiaDiv);
       }
 
-      materiaDiv.appendChild(carrossel);
-      anoDiv.appendChild(materiaDiv);
+      conteudoDiv.appendChild(anoDiv);
     }
 
-    conteudoDiv.appendChild(anoDiv);
+  } catch (erro) {
+    conteudoDiv.innerHTML = `<p style='color:red;text-align:center;'>⚠️ Erro ao carregar conteúdo: ${erro.message}</p>`;
+    console.error(erro);
   }
 }
 
-// Função que lista subpastas de uma URL do GitHub
 async function listarPastas(url) {
   const resposta = await fetch(url);
+  if (!resposta.ok) throw new Error(`Erro ao buscar: ${url}`);
   const dados = await resposta.json();
   return dados.filter(item => item.type === "dir");
 }
 
-// Formata nomes de pastas para títulos legíveis
 function formatarNome(nome) {
   return nome
-    .replace(/([0-9]+ano)/i, "$1º Ano")
+    .replace(/([0-9]+º?ano)/i, "$1")
     .replace(/_/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/^\w/, c => c.toUpperCase());
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, l => l.toUpperCase());
 }
 
 carregarConteudo();
