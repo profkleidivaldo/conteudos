@@ -1,150 +1,160 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Capítulos - +Conteúdo</title>
 <style>
-  body {
-    margin: 0;
-    font-family: "Poppins", sans-serif;
-    background: #0f172a;
-    color: #f1f5f9;
-    line-height: 1.6;
-  }
-
-  header {
-    background: #0ea5e9;
-    color: white;
-    text-align: center;
-    padding: 16px 0;
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-  }
-
-  main {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 0 20px;
-  }
-
-  h1 {
-    text-align: center;
-    color: #38bdf8;
-    font-size: 2rem;
-    margin-bottom: 10px;
-  }
-
-  .subtitulo {
-    text-align: center;
-    font-size: 1.1rem;
-    color: #cbd5e1;
-    margin-bottom: 40px;
-  }
-
-  .capitulos {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 25px;
-  }
-
-  .capitulo {
-    background: #1e293b;
-    border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-    cursor: pointer;
-    text-decoration: none;
-    color: #f1f5f9;
-  }
-
-  .capitulo:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 25px rgba(56,189,248,0.4);
-  }
-
-  .capitulo img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    filter: brightness(0.85);
-  }
-
-  .capitulo h3 {
-    margin: 0;
-    padding: 12px;
-    text-align: center;
-    font-size: 1rem;
-    border-top: 2px solid #38bdf8;
-    background: #0f172a;
-  }
-
-  footer {
-    text-align: center;
-    padding: 30px;
-    color: #94a3b8;
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 600px) {
-    h1 { font-size: 1.6rem; }
-    .capitulo img { height: 130px; }
-  }
+  body{margin:0;font-family:"Poppins",sans-serif;background:#0f172a;color:#f1f5f9}
+  header{background:#0ea5e9;color:white;text-align:center;padding:16px 0;font-size:1.6rem;font-weight:700}
+  main{max-width:900px;margin:36px auto;padding:0 20px}
+  h1{text-align:center;color:#38bdf8;font-size:2rem;margin:0 0 8px}
+  .subtitulo{text-align:center;color:#cbd5e1;margin-bottom:24px}
+  .capitulos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+  .capitulo{background:#1e293b;border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s}
+  .capitulo:hover{transform:scale(1.03);box-shadow:0 8px 20px rgba(56,189,248,0.18)}
+  .capitulo img{width:100%;height:160px;object-fit:cover;filter:brightness(.86)}
+  .capitulo h3{margin:0;padding:12px;text-align:center;border-top:2px solid #38bdf8;background:#0f172a;font-size:1rem}
+  .mensagem{max-width:900px;margin:18px auto;padding:14px;border-radius:10px;background:#f8fafc;color:#0f172a}
+  footer{text-align:center;padding:30px;color:#94a3b8}
+  @media(max-width:600px){.capitulo img{height:130px}}
 </style>
 </head>
 <body>
-
 <header>📚 +Conteúdo</header>
 
 <main>
-  <h1 id="titulo"></h1>
+  <h1 id="titulo">Tópico</h1>
   <p class="subtitulo">Selecione um capítulo para abrir a aula</p>
-  <div id="lista" class="capitulos"></div>
+
+  <div id="diagnostico" style="display:none" class="mensagem"></div>
+  <div id="lista" class="capitulos" aria-live="polite"></div>
 </main>
 
 <footer>© +Conteúdo — Plataforma Educacional</footer>
 
 <script>
-async function listarCapitulos() {
-  const caminho = window.location.pathname.split("/").slice(3).join("/");
-  const repo = "profkleidivaldo/conteudos";
-  const url = `https://api.github.com/repos/${repo}/contents/${caminho}`;
-  const listaDiv = document.getElementById("lista");
-  const tituloEl = document.getElementById("titulo");
+/*
+  index.html de tópico — detecta automaticamente o caminho da pasta no repositório
+  e lista todos os arquivos .html como capítulos (exceto index.html).
+  CONFIGURE: usuario e repositorio abaixo (deixe conforme seu repositório)
+*/
 
-  // Nome do tópico baseado na pasta atual
-  const nomeTopico = caminho.split("/").pop().replace(/-/g, " ");
-  tituloEl.textContent = nomeTopico.charAt(0).toUpperCase() + nomeTopico.slice(1);
+const usuario = "profkleidivaldo";
+const repositorio = "conteudos";
+const repoFull = `${usuario}/${repositorio}`;
+const listaDiv = document.getElementById('lista');
+const tituloEl = document.getElementById('titulo');
+const diag = document.getElementById('diagnostico');
 
-  try {
-    const resposta = await fetch(url);
-    const arquivos = await resposta.json();
+/* Retira index.html e barras extras */
+function cleanPath(p){
+  if(!p) return "";
+  return p.replace(/index\.html$/i,'').replace(/^\/|\/$/g,'');
+}
 
-    for (const arquivo of arquivos) {
-      if (arquivo.name.endsWith(".html") && arquivo.name.toLowerCase() !== "index.html") {
-        listaDiv.innerHTML += `
-          <a class="capitulo" href="${arquivo.name}" target="_blank">
-            <img src="https://picsum.photos/400/200?random=${Math.floor(Math.random()*100)}" alt="Capa do capítulo">
-            <h3>${arquivo.name.replace(".html","").replace(/-/g," ")}</h3>
-          </a>`;
-      }
+/* Tenta derivar o caminho correto (p.ex. "1ano/matematica/geometria") de várias formas */
+function detectarCaminho(){
+  let path = window.location.pathname || ""; // ex: /conteudos/1ano/matematica/geometria/index.html
+  // remove query/hash
+  path = path.split('?')[0].split('#')[0];
+
+  // 1) se o path já contém o nome do repositório 'conteudos', usar o trecho após ele
+  const repoSegment = `/${repositorio}/`;
+  if(path.toLowerCase().includes(repoSegment.toLowerCase())){
+    const after = path.substring(path.toLowerCase().indexOf(repoSegment.toLowerCase()) + repoSegment.length);
+    return cleanPath(after);
+  }
+
+  // 2) se o hostname é <usuario>.github.io e o repo está em primeiro segmento (ex: /repo/...), remover o primeiro segmento possible
+  const host = window.location.hostname || "";
+  const segments = path.replace(/^\/+/,'').split('/');
+  if(host.toLowerCase() === `${usuario.toLowerCase()}.github.io`){
+    // path: /conteudos/1ano/...
+    if(segments[0] === repositorio) return cleanPath(segments.slice(1).join('/'));
+    // sometimes deployed at root of repo (no repo segment) => if path includes ano/..., return that
+    return cleanPath(segments.join('/'));
+  }
+
+  // 3) fallback: se houver pattern like /<anything>/conteudos/... try to find 'conteudos' in segments
+  const idxRepo = segments.findIndex(s => s.toLowerCase() === repositorio.toLowerCase());
+  if(idxRepo !== -1){
+    return cleanPath(segments.slice(idxRepo+1).join('/'));
+  }
+
+  // 4) fallback final: assume current folder is path without leading slash
+  return cleanPath(segments.join('/'));
+}
+
+/* Monta URL da API GitHub para a pasta detectada */
+function apiUrlPara(caminho){
+  // se caminho vazio (não esperado em tópico), retorna root contents
+  const caminhoSafe = caminho ? `/${caminho}` : "";
+  return `https://api.github.com/repos/${repoFull}/contents${caminhoSafe}`;
+}
+
+function tituloFromPath(caminho){
+  if(!caminho) return "Tópico";
+  const parts = caminho.split('/');
+  return parts[parts.length-1].replace(/[-_]/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function listarCapitulos(){
+  listaDiv.innerHTML = "";
+  diag.style.display = "none";
+  const caminho = detectarCaminho(); // ex: "1ano/matematica/geometria"
+  tituloEl.textContent = tituloFromPath(caminho);
+
+  // diagnostic info (apenas para dev) — se quiser esconder, comente a linha abaixo
+  diag.style.display = "block";
+  diag.innerHTML = `<strong>Diagnóstico:</strong><br>
+    caminho detectado: <code>${caminho || '(vazio)'}</code><br>
+    API solicitada: <code>${apiUrlPara(caminho)}</code>`;
+
+  try{
+    const res = await fetch(apiUrlPara(caminho), { headers: { "Accept": "application/vnd.github.v3+json" }});
+    if(!res.ok){
+      throw new Error(`GitHub API respondeu ${res.status} ${res.statusText}`);
+    }
+    const dados = await res.json();
+    // filtra arquivos HTML, ignorando index.html
+    const arquivos = dados.filter(f => f.type === 'file' && /\.html?$/i.test(f.name) && !/index\.html?$/i.test(f.name));
+
+    if(!arquivos.length){
+      listaDiv.innerHTML = `<p style="color:#cbd5e1">Nenhum capítulo (.html) encontrado nesta pasta.</p>`;
+      return;
     }
 
-    if (listaDiv.innerHTML === "") {
-      listaDiv.innerHTML = "<p>Nenhum capítulo encontrado nesta pasta.</p>";
+    // ordenar: opcionalmente por nome
+    arquivos.sort((a,b) => a.name.localeCompare(b.name, 'pt', { numeric: true }));
+
+    for(let i=0;i<arquivos.length;i++){
+      const arq = arquivos[i];
+      const nome = arq.name.replace(/\.html?$/i,'').replace(/[-_]/g,' ');
+      const card = document.createElement('a');
+      card.className = 'capitulo';
+      card.href = arq.name; // link relativo (abrirá a página)
+      card.target = '_blank';
+      card.innerHTML = `
+        <img src="https://picsum.photos/400/200?random=${Math.floor(Math.random()*100)}" alt="${nome}">
+        <h3>${(i+1)}. ${nome}</h3>
+      `;
+      listaDiv.appendChild(card);
     }
 
-  } catch (erro) {
-    console.error("Erro ao carregar capítulos:", erro);
-    listaDiv.innerHTML = "<p>❌ Erro ao carregar os capítulos.</p>";
+    // esconder diagnóstico se tudo ok
+    diag.style.display = "none";
+
+  }catch(err){
+    console.error("Erro ao listar capítulos:", err);
+    diag.style.display = "block";
+    diag.innerHTML += `<br><strong style="color:#fca5a5">Erro:</strong> ${err.message}`;
+    listaDiv.innerHTML = `<p style="color:#fca5a5">❌ Erro ao carregar os capítulos. Veja o diagnóstico acima.</p>`;
   }
 }
 
+/* Executa */
 listarCapitulos();
 </script>
-
 </body>
 </html>
