@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📘 Capítulos — +Conteúdo</title>
+<style>
+  :root {
+    --azul: #0e7490;
+    --claro: #f3fafc;
+    --sombra: rgba(0,0,0,0.1);
+  }
+  body {
+    font-family: "Inter", sans-serif;
+    background: linear-gradient(180deg,#f7fbfd,#eaf6fb);
+    margin: 0;
+    color: #123;
+  }
+  header {
+    background: linear-gradient(90deg,#0ea5a4,#06b6d4);
+    color: white;
+    text-align: center;
+    padding: 20px 10px;
+    box-shadow: 0 4px 8px var(--sombra);
+  }
+  header h1 {margin: 0; font-size: 22px;}
+  main {
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 6px 14px var(--sombra);
+    padding: 20px 25px;
+  }
+  .livro-capa {
+    width: 100%;
+    height: 200px;
+    border-radius: 12px;
+    background: linear-gradient(135deg,#0ea5a4,#3ec2d2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .livro-capa::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(255,255,255,0.2);
+  }
+  .capitulos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .capitulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--claro);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: #0e5870;
+    font-weight: 600;
+    transition: 0.2s;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+  }
+  .capitulo:hover {
+    background: #d8f3f8;
+    transform: scale(1.02);
+  }
+  .capitulo span {
+    font-size: 14px;
+    color: #555;
+  }
+  footer {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>📘 +Conteúdo</h1>
+  <div style="font-size:14px;opacity:0.9">Capítulos disponíveis neste tópico</div>
+</header>
+
+<main>
+  <div class="livro-capa" id="tituloLivro">Tópico</div>
+  <div id="capitulos" class="capitulos"></div>
+</main>
+
+<footer>© +Conteúdo — Aprendizado em capítulos</footer>
+
+<script>
+const usuario = "profkleidivaldo";
+const repositorio = "conteudos";
+
+// Obter caminho relativo do diretório atual (ex: 1ano/matematica/geometria)
+const caminhoAtual = window.location.pathname
+  .replace(`/${repositorio}/`, "")
+  .replace(/index\.html$/, "")
+  .replace(/^\/|\/$/g, "");
+
+const apiUrl = `https://api.github.com/repos/${usuario}/${repositorio}/contents/${caminhoAtual}`;
+
+async function listarArquivos() {
+  const lista = document.getElementById("capitulos");
+  const tituloLivro = document.getElementById("tituloLivro");
+  const nomePasta = caminhoAtual.split("/").pop();
+  tituloLivro.textContent = formatarTitulo(nomePasta);
+
+  try {
+    const res = await fetch(apiUrl);
+    const dados = await res.json();
+
+    const htmls = dados.filter(f => f.type === "file" && /\.html?$/i.test(f.name));
+
+    if (htmls.length === 0) {
+      lista.innerHTML = `<p style="text-align:center;color:#777;">Nenhum capítulo encontrado.</p>`;
+      return;
+    }
+
+    htmls.forEach((arq, i) => {
+      const nome = formatarTitulo(arq.name.replace(/\.html?$/i, ""));
+      const link = `${arq.name}`;
+      const cap = document.createElement("a");
+      cap.href = link;
+      cap.className = "capitulo";
+      cap.innerHTML = `<div>📖 ${i+1}. ${nome}</div><span>Abrir</span>`;
+      lista.appendChild(cap);
+    });
+  } catch (err) {
+    console.error(err);
+    lista.innerHTML = `<p style="text-align:center;color:#c00;">Erro ao carregar capítulos.</p>`;
+  }
+}
+
+function formatarTitulo(txt) {
+  return decodeURIComponent(txt)
+    .replace(/[-_]/g, " ")
+    .replace(/\b([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b(\d+)ano\b/gi, "$1º Ano")
+    .replace(/linguaportuguesa/gi, "Língua Portuguesa")
+    .replace(/matematica/gi, "Matemática")
+    .replace(/geografia/gi, "Geografia")
+    .replace(/historia/gi, "História")
+    .replace(/ciencias/gi, "Ciências")
+    .replace(/\b([a-z])/g, l => l.toUpperCase());
+}
+
+listarArquivos();
+</script>
+</body>
+</html>
