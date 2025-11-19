@@ -150,78 +150,124 @@
 <div id="conteudo"></div>
 
 <script>
+const repo = "profkleidivaldo/conteudos";
+
 async function carregarAno() {
-  const conteudoDiv = document.getElementById("conteudo");
   const ano = document.getElementById("ano").value;
+  const conteudoDiv = document.getElementById("conteudo");
   conteudoDiv.innerHTML = "";
   if (!ano) return;
 
-  conteudoDiv.innerHTML = `<h2>🔍 Carregando ${ano.replace("ano","º Ano")}...</h2>`;
+  conteudoDiv.innerHTML = `<h2>${ano.replace("ano","º Ano")}</h2>`;
 
-  try {
-    const repo = "profkleidivaldo/conteudos";
-    const url = `https://api.github.com/repos/${repo}/contents/${ano}`;
+  // Buscar matérias
+  const url = `https://api.github.com/repos/${repo}/contents/${ano}`;
+  const res = await fetch(url);
+  const materias = await res.json();
 
-    const materiasRes = await fetch(url);
-    const materias = await materiasRes.json();
+  let html = `<h2>Escolha a matéria</h2><div class="grid-aulas">`;
 
-    conteudoDiv.innerHTML = `<h2>${ano.replace("ano","º Ano")}</h2>`;
+  for (const materia of materias) {
+    if (materia.type !== "dir") continue;
 
-    for (const materia of materias) {
-      if (materia.type !== "dir") continue;
-
-      const materiaUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}`;
-      const eixosRes = await fetch(materiaUrl);
-      const eixos = await eixosRes.json();
-
-      let html = `
-        <div class="materia">
-          <h3>${materia.name.replace(/-/g, " ").toUpperCase()}</h3>
-          <div class="grid-aulas">
-      `;
-
-      // NIVEL 3 — EIXOS TEMÁTICOS
-      for (const eixo of eixos) {
-        if (eixo.type !== "dir") continue;
-
-        const eixoUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}/${eixo.name}`;
-        const temasRes = await fetch(eixoUrl);
-        const temas = await temasRes.json();
-
-        // NIVEL 4 — TEMAS ESPECÍFICOS
-        for (const tema of temas) {
-          if (tema.type !== "dir") continue;
-
-          const temaUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}/${eixo.name}/${tema.name}`;
-          const arquivosTemaRes = await fetch(temaUrl);
-          const arquivosTema = await arquivosTemaRes.json();
-
-          const indexArquivo = arquivosTema.find(a => a.name.toLowerCase() === "index.html");
-
-          if (!indexArquivo) continue;
-
-          html += `
-            <a class="aula" 
-               href="https://profkleidivaldo.github.io/conteudos/${ano}/${materia.name}/${eixo.name}/${tema.name}/index.html" 
-               target="_blank">
-              <img src="https://picsum.photos/400/300?random=${Math.floor(Math.random()*9000)}">
-              <h3>${tema.name.replace(/-/g, " ")}</h3>
-            </a>
-          `;
-        }
-      }
-
-      html += `</div></div>`;
-      conteudoDiv.innerHTML += html;
-    }
-    
-  } catch (erro) {
-    conteudoDiv.innerHTML = "<p>❌ Erro ao carregar conteúdo. Verifique a estrutura das pastas no GitHub.</p>";
-    console.error(erro);
+    html += `
+      <div class="aula" onclick="carregarEixos('${ano}', '${materia.name}')">
+        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
+        <h3>${materia.name.replace(/-/g, " ")}</h3>
+      </div>
+    `;
   }
+
+  html += `</div>`;
+  conteudoDiv.innerHTML = html;
+}
+
+// NIVEL 2 → EIXOS TEMÁTICOS
+async function carregarEixos(ano, materia) {
+  const conteudoDiv = document.getElementById("conteudo");
+
+  conteudoDiv.innerHTML = `<h2>${materia.replace(/-/g," ").toUpperCase()}</h2>`;
+
+  const url = `https://api.github.com/repos/${repo}/contents/${ano}/${materia}`;
+  const res = await fetch(url);
+  const eixos = await res.json();
+
+  let html = `<h2>Escolha o eixo temático</h2><div class="grid-aulas">`;
+
+  for (const eixo of eixos) {
+    if (eixo.type !== "dir") continue;
+
+    html += `
+      <div class="aula" onclick="carregarTemas('${ano}', '${materia}', '${eixo.name}')">
+        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
+        <h3>${eixo.name.replace(/-/g, " ")}</h3>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  conteudoDiv.innerHTML = html;
+}
+
+// NIVEL 3 → TEMAS ESPECÍFICOS
+async function carregarTemas(ano, materia, eixo) {
+  const conteudoDiv = document.getElementById("conteudo");
+
+  conteudoDiv.innerHTML = `<h2>${eixo.replace(/-/g," ").toUpperCase()}</h2>`;
+
+  const url = `https://api.github.com/repos/${repo}/contents/${ano}/${materia}/${eixo}`;
+  const res = await fetch(url);
+  const temas = await res.json();
+
+  let html = `<h2>Escolha o tema</h2><div class="grid-aulas">`;
+
+  for (const tema of temas) {
+    if (tema.type !== "dir") continue;
+
+    html += `
+      <div class="aula" onclick="carregarCapitulos('${ano}', '${materia}', '${eixo}', '${tema.name}')">
+        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
+        <h3>${tema.name.replace(/-/g, " ")}</h3>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  conteudoDiv.innerHTML = html;
+}
+
+// NIVEL 4 → CAPÍTULOS DA PASTA
+async function carregarCapitulos(ano, materia, eixo, tema) {
+  const conteudoDiv = document.getElementById("conteudo");
+
+  conteudoDiv.innerHTML = `<h2>${tema.replace(/-/g," ").toUpperCase()}</h2>`;
+
+  const url = `https://api.github.com/repos/${repo}/contents/${ano}/${materia}/${eixo}/${tema}`;
+  const res = await fetch(url);
+  const arquivos = await res.json();
+
+  let html = `<h2>Capítulos</h2><div class="grid-aulas">`;
+
+  for (const a of arquivos) {
+    if (a.type !== "file" || !a.name.endsWith(".html")) continue;
+
+    html += `
+      <a class="aula" 
+         href="https://profkleidivaldo.github.io/conteudos/${ano}/${materia}/${eixo}/${tema}/${a.name}" 
+         target="_blank">
+        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
+        <h3>${a.name.replace(".html","").replace(/-/g," ")}</h3>
+      </a>
+    `;
+  }
+
+  html += `</div>`;
+  conteudoDiv.innerHTML = html;
 }
 </script>
 
+
 </body>
 </html>
+
 
