@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>+Conteúdo</title>
+
 <style>
   body {
     margin: 0;
@@ -23,41 +24,48 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
 
-  .filtro-container {
-    text-align: center;
-    margin: 20px 0;
+  .fade {
+    opacity: 0;
+    animation: fadeIn .5s forwards;
   }
 
-  select {
-    padding: 10px 18px;
+  @keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+
+  .breadcrumbs {
+    margin: 15px 30px;
     font-size: 1rem;
-    border: none;
-    border-radius: 8px;
-    color: #0f172a;
-    background: #f1f5f9;
-    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .breadcrumbs span {
     cursor: pointer;
-  }
-
-  h2 {
-    margin-left: 30px;
     color: #38bdf8;
-    border-left: 6px solid #0ea5e9;
-    padding-left: 10px;
   }
 
-  .materia {
-    margin-bottom: 50px;
+  .breadcrumbs span:hover {
+    text-decoration: underline;
   }
 
-  .materia h3 {
-    margin: 10px 30px;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #f1f5f9;
+  .voltar-btn, .home-btn {
+    display: inline-block;
+    margin: 10px 20px;
+    padding: 10px 20px;
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: .3s;
+    border: none;
   }
 
-  /* Estilo “carrossel” horizontal */
+  .voltar-btn:hover, .home-btn:hover {
+    background: #0ea5e9;
+  }
+
   .grid-aulas {
     display: flex;
     overflow-x: auto;
@@ -66,16 +74,6 @@
     padding: 10px 30px;
   }
 
-  .grid-aulas::-webkit-scrollbar {
-    height: 8px;
-  }
-
-  .grid-aulas::-webkit-scrollbar-thumb {
-    background-color: #38bdf8;
-    border-radius: 4px;
-  }
-
-  /* Cartões estilo Netflix */
   .aula {
     flex: 0 0 auto;
     width: 220px;
@@ -84,8 +82,7 @@
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     overflow: hidden;
-    position: relative;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: .3s;
   }
 
   .aula:hover {
@@ -97,41 +94,44 @@
     width: 100%;
     height: 75%;
     object-fit: cover;
-    filter: brightness(0.9);
   }
 
   .aula h3 {
-    font-size: 1rem;
     text-align: center;
-    color: #f1f5f9;
     background: #0f172a;
-    margin: 0;
     padding: 10px;
-    font-weight: 600;
     border-top: 2px solid #38bdf8;
   }
 
-  @media (max-width: 768px) {
-    header {
-      font-size: 1.4rem;
-    }
+  /* Lista de capítulos */
+  .lista-capitulos {
+    padding: 20px 40px;
+    font-size: 1.2rem;
+  }
 
-    .aula {
-      width: 160px;
-      height: 240px;
-    }
+  .lista-capitulos a {
+    display: block;
+    margin: 10px 0;
+    padding: 12px;
+    background: #1e293b;
+    border-radius: 8px;
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: bold;
+    transition: .3s;
+  }
 
-    .aula h3 {
-      font-size: 0.85rem;
-    }
+  .lista-capitulos a:hover {
+    background: #334155;
   }
 </style>
 </head>
+
 <body>
 
 <header>📚 +Conteúdo</header>
 
-<div class="filtro-container">
+<div class="filtro-container" style="text-align:center;margin:20px 0;">
   <label for="ano">Selecione o Ano:</label>
   <select id="ano" onchange="carregarAno()">
     <option value="">-- Escolha um ano --</option>
@@ -147,127 +147,173 @@
   </select>
 </div>
 
+<div id="breadcrumbs"></div>
 <div id="conteudo"></div>
 
 <script>
 const repo = "profkleidivaldo/conteudos";
 
+const capasMaterias = {
+  "matematica": "https://i.imgur.com/5QF4z4F.jpeg",
+  "historia": "https://i.imgur.com/zV0VWaB.jpeg",
+  "geografia": "https://i.imgur.com/X16m0jN.jpeg",
+  "ciencias": "https://i.imgur.com/hlNRHjO.jpeg",
+  "lingua-portuguesa": "https://i.imgur.com/YiLu6Oh.jpeg"
+};
+
+const capasEixos = {
+  "numeros": "https://i.imgur.com/W0AzP6I.jpeg",
+  "algebra": "https://i.imgur.com/rDSgCdc.jpeg",
+  "geometria": "https://i.imgur.com/7fEPfB8.jpeg",
+  "grandezas-e-medidas": "https://i.imgur.com/nnh6rJw.jpeg",
+  "probabilidade-e-estatistica": "https://i.imgur.com/xfRB5nv.jpeg"
+};
+
+function getCapaMateria(nome) {
+  return capasMaterias[nome] || `https://picsum.photos/400/300?random=${Math.random()*9000}`;
+}
+
+function getCapaEixo(nome) {
+  return capasEixos[nome] || `https://picsum.photos/400/300?random=${Math.random()*9000}`;
+}
+
+function atualizarBreadcrumbs(caminho) {
+  document.getElementById("breadcrumbs").innerHTML = `
+    <div class="breadcrumbs fade">
+      <span onclick="home()">Home</span>
+      ${caminho.map(c => ` > <span onclick="${c.func}">${c.label}</span>`).join("")}
+    </div>
+  `;
+}
+
+function home() {
+  document.getElementById("breadcrumbs").innerHTML = "";
+  document.getElementById("conteudo").innerHTML =
+    `<h2 class="fade" style="text-align:center;margin-top:40px;">Selecione um Ano</h2>`;
+  document.getElementById("ano").value = "";
+}
+
 async function carregarAno() {
   const ano = document.getElementById("ano").value;
-  const conteudoDiv = document.getElementById("conteudo");
-  conteudoDiv.innerHTML = "";
-  if (!ano) return;
+  if (!ano) return home();
 
-  conteudoDiv.innerHTML = `<h2>${ano.replace("ano","º Ano")}</h2>`;
+  atualizarBreadcrumbs([{label: ano.replace("ano","º Ano"), func:`carregarAno()`}]);
 
-  // Buscar matérias
   const url = `https://api.github.com/repos/${repo}/contents/${ano}`;
   const res = await fetch(url);
   const materias = await res.json();
 
-  let html = `<h2>Escolha a matéria</h2><div class="grid-aulas">`;
+  let html = `<button class="home-btn" onclick="home()">🏠 Home</button>`;
+  html += `<h2 class="fade">Escolha a Matéria</h2><div class="grid-aulas fade">`;
 
   for (const materia of materias) {
     if (materia.type !== "dir") continue;
+    const capa = getCapaMateria(materia.name);
 
     html += `
-      <div class="aula" onclick="carregarEixos('${ano}', '${materia.name}')">
-        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
-        <h3>${materia.name.replace(/-/g, " ")}</h3>
-      </div>
-    `;
+      <div class="aula" onclick="carregarEixos('${ano}','${materia.name}')">
+        <img src="${capa}">
+        <h3>${materia.name.replace(/-/g," ")}</h3>
+      </div>`;
   }
 
   html += `</div>`;
-  conteudoDiv.innerHTML = html;
+  conteudo.innerHTML = html;
 }
 
-// NIVEL 2 → EIXOS TEMÁTICOS
 async function carregarEixos(ano, materia) {
-  const conteudoDiv = document.getElementById("conteudo");
-
-  conteudoDiv.innerHTML = `<h2>${materia.replace(/-/g," ").toUpperCase()}</h2>`;
+  atualizarBreadcrumbs([
+    {label: ano.replace("ano","º Ano"), func:`carregarAno()`},
+    {label: materia.replace(/-/g," "), func:`carregarEixos('${ano}','${materia}')`}
+  ]);
 
   const url = `https://api.github.com/repos/${repo}/contents/${ano}/${materia}`;
   const res = await fetch(url);
   const eixos = await res.json();
 
-  let html = `<h2>Escolha o eixo temático</h2><div class="grid-aulas">`;
+  let html = `
+    <button class="voltar-btn" onclick="carregarAno()">⬅ Voltar</button>
+    <h2 class="fade">Escolha o Eixo Temático</h2>
+    <div class="grid-aulas fade">`;
 
   for (const eixo of eixos) {
     if (eixo.type !== "dir") continue;
 
+    const capa = getCapaEixo(eixo.name);
+
     html += `
-      <div class="aula" onclick="carregarTemas('${ano}', '${materia}', '${eixo.name}')">
-        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
-        <h3>${eixo.name.replace(/-/g, " ")}</h3>
-      </div>
-    `;
+      <div class="aula" onclick="carregarTemas('${ano}','${materia}','${eixo.name}')">
+        <img src="${capa}">
+        <h3>${eixo.name.replace(/-/g," ")}</h3>
+      </div>`;
   }
 
   html += `</div>`;
-  conteudoDiv.innerHTML = html;
+  conteudo.innerHTML = html;
 }
 
-// NIVEL 3 → TEMAS ESPECÍFICOS
 async function carregarTemas(ano, materia, eixo) {
-  const conteudoDiv = document.getElementById("conteudo");
-
-  conteudoDiv.innerHTML = `<h2>${eixo.replace(/-/g," ").toUpperCase()}</h2>`;
+  atualizarBreadcrumbs([
+    {label: ano.replace("ano","º Ano"), func:`carregarAno()`},
+    {label: materia.replace(/-/g," "), func:`carregarEixos('${ano}','${materia}')`},
+    {label: eixo.replace(/-/g," "), func:`carregarTemas('${ano}','${materia}','${eixo}')`}
+  ]);
 
   const url = `https://api.github.com/repos/${repo}/contents/${ano}/${materia}/${eixo}`;
   const res = await fetch(url);
   const temas = await res.json();
 
-  let html = `<h2>Escolha o tema</h2><div class="grid-aulas">`;
+  let html = `
+    <button class="voltar-btn" onclick="carregarEixos('${ano}','${materia}')">⬅ Voltar</button>
+    <h2 class="fade">Escolha o Tema</h2>
+    <div class="grid-aulas fade">`;
 
   for (const tema of temas) {
     if (tema.type !== "dir") continue;
 
     html += `
-      <div class="aula" onclick="carregarCapitulos('${ano}', '${materia}', '${eixo}', '${tema.name}')">
+      <div class="aula" onclick="carregarCapitulos('${ano}','${materia}','${eixo}','${tema.name}')">
         <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
-        <h3>${tema.name.replace(/-/g, " ")}</h3>
-      </div>
-    `;
+        <h3>${tema.name.replace(/-/g," ")}</h3>
+      </div>`;
   }
 
   html += `</div>`;
-  conteudoDiv.innerHTML = html;
+  conteudo.innerHTML = html;
 }
 
-// NIVEL 4 → CAPÍTULOS DA PASTA
 async function carregarCapitulos(ano, materia, eixo, tema) {
-  const conteudoDiv = document.getElementById("conteudo");
-
-  conteudoDiv.innerHTML = `<h2>${tema.replace(/-/g," ").toUpperCase()}</h2>`;
+  atualizarBreadcrumbs([
+    {label: ano.replace("ano","º Ano"), func:`carregarAno()`},
+    {label: materia.replace(/-/g," "), func:`carregarEixos('${ano}','${materia}')`},
+    {label: eixo.replace(/-/g," "), func:`carregarTemas('${ano}','${materia}','${eixo}')`},
+    {label: tema.replace(/-/g," "), func:`carregarCapitulos('${ano}','${materia}','${eixo}','${tema}')`}
+  ]);
 
   const url = `https://api.github.com/repos/${repo}/contents/${ano}/${materia}/${eixo}/${tema}`;
   const res = await fetch(url);
   const arquivos = await res.json();
 
-  let html = `<h2>Capítulos</h2><div class="grid-aulas">`;
+  let html = `
+    <button class="voltar-btn" onclick="carregarTemas('${ano}','${materia}','${eixo}')">⬅ Voltar</button>
+    <h2 class="fade">Capítulos</h2>
 
-  for (const a of arquivos) {
-    if (a.type !== "file" || !a.name.endsWith(".html")) continue;
+    <div class="lista-capitulos fade">`;
 
-    html += `
-      <a class="aula" 
-         href="https://profkleidivaldo.github.io/conteudos/${ano}/${materia}/${eixo}/${tema}/${a.name}" 
-         target="_blank">
-        <img src="https://picsum.photos/400/300?random=${Math.random()*9000}">
-        <h3>${a.name.replace(".html","").replace(/-/g," ")}</h3>
-      </a>
-    `;
+  for (const arq of arquivos) {
+    if (arq.type === "file" && arq.name.endsWith(".html")) {
+      html += `
+        <a target="_blank"
+           href="https://profkleidivaldo.github.io/conteudos/${ano}/${materia}/${eixo}/${tema}/${arq.name}">
+          📘 ${arq.name.replace(".html","").replace(/-/g," ")}
+        </a>`;
+    }
   }
 
   html += `</div>`;
-  conteudoDiv.innerHTML = html;
+  conteudo.innerHTML = html;
 }
 </script>
 
-
 </body>
 </html>
-
-
