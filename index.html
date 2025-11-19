@@ -161,39 +161,60 @@ async function carregarAno() {
   try {
     const repo = "profkleidivaldo/conteudos";
     const url = `https://api.github.com/repos/${repo}/contents/${ano}`;
-    const resposta = await fetch(url);
-    const pastas = await resposta.json();
+
+    const materiasRes = await fetch(url);
+    const materias = await materiasRes.json();
 
     conteudoDiv.innerHTML = `<h2>${ano.replace("ano","º Ano")}</h2>`;
 
-    for (const materia of pastas) {
-      if (materia.type === "dir") {
-        const subUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}`;
-        const subRes = await fetch(subUrl);
-        const topicos = await subRes.json();
+    for (const materia of materias) {
+      if (materia.type !== "dir") continue;
 
-        let html = `<div class="materia"><h3>${materia.name.replace(/-/g, " ").toUpperCase()}</h3><div class="grid-aulas">`;
+      const materiaUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}`;
+      const eixosRes = await fetch(materiaUrl);
+      const eixos = await eixosRes.json();
 
-        for (const topico of topicos) {
-          if (topico.type === "dir") {
-            // Buscar o index.html dentro da subpasta
-            const aulasRes = await fetch(topico.url);
-            const aulas = await aulasRes.json();
-            const indexFile = aulas.find(a => a.name.toLowerCase() === "index.html");
-            if (indexFile) {
-              html += `
-                <a class="aula" href="https://profkleidivaldo.github.io/conteudos/${ano}/${materia.name}/${topico.name}/index.html" target="_blank">
-                  <img src="https://picsum.photos/400/300?random=${Math.floor(Math.random()*100)}" alt="Capa da aula">
-                  <h3>${topico.name.replace(/-/g," ")}</h3>
-                </a>`;
-            }
-          }
+      let html = `
+        <div class="materia">
+          <h3>${materia.name.replace(/-/g, " ").toUpperCase()}</h3>
+          <div class="grid-aulas">
+      `;
+
+      // NIVEL 3 — EIXOS TEMÁTICOS
+      for (const eixo of eixos) {
+        if (eixo.type !== "dir") continue;
+
+        const eixoUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}/${eixo.name}`;
+        const temasRes = await fetch(eixoUrl);
+        const temas = await temasRes.json();
+
+        // NIVEL 4 — TEMAS ESPECÍFICOS
+        for (const tema of temas) {
+          if (tema.type !== "dir") continue;
+
+          const temaUrl = `https://api.github.com/repos/${repo}/contents/${ano}/${materia.name}/${eixo.name}/${tema.name}`;
+          const arquivosTemaRes = await fetch(temaUrl);
+          const arquivosTema = await arquivosTemaRes.json();
+
+          const indexArquivo = arquivosTema.find(a => a.name.toLowerCase() === "index.html");
+
+          if (!indexArquivo) continue;
+
+          html += `
+            <a class="aula" 
+               href="https://profkleidivaldo.github.io/conteudos/${ano}/${materia.name}/${eixo.name}/${tema.name}/index.html" 
+               target="_blank">
+              <img src="https://picsum.photos/400/300?random=${Math.floor(Math.random()*9000)}">
+              <h3>${tema.name.replace(/-/g, " ")}</h3>
+            </a>
+          `;
         }
-
-        html += "</div></div>";
-        conteudoDiv.innerHTML += html;
       }
+
+      html += `</div></div>`;
+      conteudoDiv.innerHTML += html;
     }
+    
   } catch (erro) {
     conteudoDiv.innerHTML = "<p>❌ Erro ao carregar conteúdo. Verifique a estrutura das pastas no GitHub.</p>";
     console.error(erro);
@@ -203,3 +224,4 @@ async function carregarAno() {
 
 </body>
 </html>
+
